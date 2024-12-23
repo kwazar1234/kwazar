@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ff</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+        pre {
+            background: #282c34; /* Тёмный фон для кода */
+            color: #abb2bf; /* Светлый текст */
+            padding: 15px;
+            border-radius: 5px;
+            overflow: auto; /* Добавляет прокрутку при необходимости */
+            font-family: Consolas, "Courier New", monospace;
+            line-height: 1.5;
+        }
+        h1 {
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <h1>а</h1>
+    <pre>
+<code>
+public partial class MainWindow : Window
+{
+    public MainWindow()
+    {
+        InitializeComponent();
+        AppConnect.model = new АвтомобилиEntities();
+    }
+
+    private void Button_Click(object sender, RoutedEventArgs e)
+    {
+        string enteredLogin = tbLogin.Text.Trim();
+        string enteredPassword = pbPassword.Password.Trim(); // PasswordBox используется для ввода пароля
+
+        // Проверяем, что поля заполнены
+        if (string.IsNullOrEmpty(enteredLogin) || string.IsNullOrEmpty(enteredPassword))
+        {
+            MessageBox.Show("Введите логин и пароль.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        if (enteredLogin == "admin" && enteredPassword == "12345")
+        {
+            MessageBox.Show("Добро пожаловать, Администратор!", "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
+            // Переход на главное окно приложения
+            Окно mainWindow = new Окно();
+            mainWindow.Show();
+            this.Close(); // Закрываем окно авторизации
+            return;
+        }
+
+        try
+        {
+            // Поиск пользователя в таблице "Пользователи"
+            var user = AppConnect.model.пользователи.FirstOrDefault(u => u.login == enteredLogin && u.password == enteredPassword);
+
+            if (user != null)
+            {
+                MessageBox.Show($"Добро пожаловать, {user.fio}!", "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
+                // Переход на главное окно приложения
+                Окно mainWindow = new Окно();
+                mainWindow.Show();
+                this.Close(); // Закрываем окно авторизации
+            }
+            else
+            {
+                MessageBox.Show("Неверный логин или пароль.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Произошла ошибка: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+}
+
+
+Код второго окна:
+
+public partial class Окно : Window
+{
+    public ObservableCollection<Автомашинки> Автомашинки { get; set; }
+    public ObservableCollection<пользователи> пользователи { get; set; }
+    public ObservableCollection<Поставщики> Поставщики { get; set; }
+
+    private АвтомобилиEntities db;
+
+    public Окно()
+    {
+        InitializeComponent();
+        db = new АвтомобилиEntities(); // Инициализация объекта для работы с базой данных
+    }
+
+    private void LoadChannels_Click(object sender, RoutedEventArgs e)
+    {
+        LoadData("Автомашинки");
+    }
+    private void LoadPrograms_Click(object sender, RoutedEventArgs e)
+    {
+        LoadData("Пользователи");
+    }
+    private void LoadPostav_Click(object sender, RoutedEventArgs e)
+    {
+        LoadData("Поставщики");
+    }
+    private void LoadData(string tableName)
+    {
+        switch (tableName)
+        {
+            case "Автомашинки":
+                Автомашинки = new ObservableCollection<Автомашинки>(db.Автомашинки.ToList());
+                DataGrid.ItemsSource = Автомашинки;
+
+                Автомашинки.CollectionChanged += (s, e) =>
+                {
+                    if (e.Action == NotifyCollectionChangedAction.Remove)
+                    {
+                        foreach (var oldItem in e.OldItems)
+                            db.Автомашинки.Remove((Автомашинки)oldItem);
+                    }
+                    else if (e.Action == NotifyCollectionChangedAction.Add)
+                    {
+                        foreach (var newItem in e.NewItems)
+                            db.Автомашинки.Add((Автомашинки)newItem);
+                    }
+                    SaveChangesToDatabase();
+                };
+                break;
+            case "Пользователи":
+                пользователи = new ObservableCollection<пользователи>(db.пользователи.ToList());
+                DataGrid.ItemsSource = пользователи;
+
+                пользователи.CollectionChanged += (s, e) =>
+                {
+                    if (e.Action == NotifyCollectionChangedAction.Remove)
+                    {
+                        foreach (var oldItem in e.OldItems)
+                            db.пользователи.Remove((пользователи)oldItem);
+                    }
+                    else if (e.Action == NotifyCollectionChangedAction.Add)
+                    {
+                        foreach (var newItem in e.NewItems)
+                            db.пользователи.Add((пользователи)newItem);
+                    }
+                    SaveChangesToDatabase();
+                };
+                break;
+
+            case "Поставщики":
+                Поставщики = new ObservableCollection<Поставщики>(db.Поставщики.ToList());
+                DataGrid.ItemsSource = Поставщики;
+
+                Поставщики.CollectionChanged += (s, e) =>
+                {
+                    if (e.Action == NotifyCollectionChangedAction.Remove)
+                    {
+                        foreach (var oldItem in e.OldItems)
+                            db.Поставщики.Remove((Поставщики)oldItem);
+                    }
+                    else if (e.Action == NotifyCollectionChangedAction.Add)
+                    {
+                        foreach (var newItem in e.NewItems)
+                            db.Поставщики.Add((Поставщики)newItem);
+                    }
+                    SaveChangesToDatabase();
+                };
+
+                break;
+            default:
+                MessageBox.Show("Неизвестная таблица!");
+                break;
+        }
+
+        // Подключаем обработчики изменений для коллекции
+        if (tableName == "Автомашинки")
+        {
+            Автомашинки.CollectionChanged += Автомашинки_CollectionChanged;
+        }
+        else if (tableName == "Пользователи")
+        {
+            пользователи.CollectionChanged += Пользователи_CollectionChanged;
+        }
+        else if (tableName == "Поставщики")
+        {
+            Поставщики.CollectionChanged += Поставщики_CollectionChanged;
+        }
+    }
+
+    // Обработчики изменений коллекции
+    private void Автомашинки_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+    {
+        SaveChangesToDatabase();
+    }
+    private void Пользователи_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+    {
+        SaveChangesToDatabase();
+    }
+    private void Поставщики_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+    {
+        SaveChangesToDatabase();
+    }
+
+    // Сохранение изменений в базе данных
+    private void SaveChangesToDatabase()
+    {
+        try
+        {
+            db.SaveChanges();
+            MessageBox.Show("Изменения успешно сохранены.");
+        }
+        catch (DbEntityValidationException ex)
+        {
+            var validationErrors = string.Join("\n", ex.EntityValidationErrors.SelectMany(err => err.ValidationErrors)
+                .Select(err => $"Свойство: {err.PropertyName}, Ошибка: {err.ErrorMessage}"));
+            MessageBox.Show($"Ошибка проверки: {validationErrors}");
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Ошибка при сохранении: {ex.Message}");
+        }
+    }
+
+
+    // Обработчик для кнопки "Сохранить изменения"
+    private void SaveChanges_Click(object sender, RoutedEventArgs e)
+    {
+        SaveChangesToDatabase();
+    }
+
+    private void DeleteSelectedRow_Click(object sender, RoutedEventArgs e)
+    {
+        var selectedItem = DataGrid.SelectedItem;
+
+        if (selectedItem == null)
+        {
+            MessageBox.Show("Пожалуйста, выберите строку для удаления.");
+            return;
+        }
+
+        try
+        {
+            if (selectedItem is Автомашинки автомашинки)
+            {
+                db.Автомашинки.Remove(автомашинки);
+            }
+            else if (selectedItem is пользователи пользователь)
+            {
+                db.пользователи.Remove(пользователь);
+            }
+            else if (selectedItem is Поставщики поставщик)
+            {
+                db.Поставщики.Remove(поставщик);
+            }
+            SaveChangesToDatabase();
+            LoadData(DataGrid.ItemsSource == Автомашинки ? "Автомашинки" :
+                     DataGrid.ItemsSource == Поставщики ? "Поставщики" :
+                     DataGrid.ItemsSource == пользователи ? "Пользователи" : "Пользователи");
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Ошибка при удалении: {ex.Message}");
+        }
+    }
+
+    private int GetNextId(IEnumerable < int > existingIds)
+    {
+        return existingIds.Any() ? existingIds.Max() + 1 : 1;
+    }
+
+    private void SearchButton_Click(object sender, RoutedEventArgs e)
+    {
+        string searchText = SearchTextBox.Text.Trim();
+        if (string.IsNullOrEmpty(searchText))
+        {
+            MessageBox.Show("Введите текст для поиска.");
+            return;
+        }
+
+        if (DataGrid.ItemsSource is ObservableCollection<Автомашинки> && Автомашинки != null)
+        {
+            DataGrid.ItemsSource = new ObservableCollection<Автомашинки>(
+                Автомашинки.Where(k => k.ID.ToString().Contains(searchText) ||
+                                  k.Марка.ToString().Contains(searchText) ||
+                                  k.Название.ToString().Contains(searchText))
+            );
+        }
+        else if (DataGrid.ItemsSource is ObservableCollection<Поставщики> && Поставщики != null)
+        {
+            DataGrid.ItemsSource = new ObservableCollection<Поставщики>(
+                Поставщики.Where(z => z.id.ToString().Contains(searchText) ||
+                                     z.Наименование.Contains(searchText) ||
+                                     z.Глава.ToString().Contains(searchText) ||
+                                     z.номер.ToString().Contains(searchText))
+            );
+        }
+        else if (DataGrid.ItemsSource is ObservableCollection<пользователи> && пользователи != null)
+        {
+            DataGrid.ItemsSource = new ObservableCollection<пользователи>(
+                пользователи.Where(p => p.userID.ToString().Contains(searchText) ||
+                                     p.fio.Contains(searchText) ||
+                                     p.login.ToString().Contains(searchText) ||
+                                     p.password.ToString().Contains(searchText) ||
+                                     p.Role.ToString().Contains(searchText))
+            );
+        }
+    }
+
+    private void ResetButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (DataGrid.ItemsSource is ObservableCollection<Автомашинки> && Автомашинки != null)
+        {
+            DataGrid.ItemsSource = Автомашинки;
+        }
+        else if (DataGrid.ItemsSource is ObservableCollection<Поставщики> && Поставщики != null)
+        {
+            DataGrid.ItemsSource = Поставщики;
+        }
+        else if (DataGrid.ItemsSource is ObservableCollection<пользователи> && пользователи != null)
+        {
+            DataGrid.ItemsSource = пользователи;
+        }
+        SearchTextBox.Clear();
+    }
+
+    private void Button_Click(object sender, RoutedEventArgs e)
+    {
+        MainWindow окно = new MainWindow();
+        окно.Show();
+        this.Close();
+    }
+}
+</code>
+    </pre>
+</body>
+</html>
